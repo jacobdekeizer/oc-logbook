@@ -32,7 +32,7 @@
                             <?php foreach ($changes['changedAttributes'] as $attribute): ?>
                                 <?= e(trans('jacob.logbook::lang.changes.column', [
                                     'column' => trans($currentModel->changeLogBookDisplayColumn($attribute['column'])),
-                                    'from' => $model->changeLogBookDisplayValue($attribute['column'], $attribute['old']) ?? '-',
+                                    'from' => $currentModel->changeLogBookDisplayValue($attribute['column'], $attribute['old']) ?? '-',
                                     'to' => $currentModel->changeLogBookDisplayValue($attribute['column'], $attribute['new']) ?? '-'
                                 ])) ?>
                                <br/>
