@@ -17,10 +17,13 @@ trait LogChanges
      * ===========================================================
      */
 
-    /** @var array $ignoreFields fields to ignore */
-    protected $ignoreFieldsLogbook = [
-        'updated_at',
-    ];
+    /**
+     * @var array $ignoreFields fields to ignore
+     *
+     * protected $ignoreFieldsLogbook = [
+     *      'updated_at'
+     * ];
+     */
 
     /**
      * Delete log book items after model is deleted
@@ -29,8 +32,9 @@ trait LogChanges
      * If false -> a new log item will be created with status deleted.
      *
      * @var bool
+     *
+     * protected $deleteLogbookAfterDelete = false;
      */
-    protected $deleteLogbookAfterDelete = false;
 
     /**
      * Here you can override the model name that is displayed in the log files.
@@ -49,10 +53,6 @@ trait LogChanges
      */
     public static function changeLogBookDisplayValue($column, $value)
     {
-//        if ($column) {
-//            // do something
-//        }
-
         return $value;
     }
 
@@ -142,8 +142,11 @@ trait LogChanges
         /** @var array $originalAttributes */
         $originalAttributes = $this->getOriginal();
 
+        /** @var array $ignoreFieldsLogbook */
+        $ignoreFieldsLogbook = $this->ignoreFieldsLogbook ?? ['updated_at'];
+
         foreach ($dirtyAttributes as $column => $newValue) {
-            if (in_array($column, $this->ignoreFieldsLogbook)) {
+            if (in_array($column, $ignoreFieldsLogbook)) {
                 continue; //ignore field
             }
 
@@ -172,7 +175,7 @@ trait LogChanges
      */
     public function logChangesAfterDelete()
     {
-        if ($this->deleteLogbookAfterDelete) {
+        if ($this->deleteLogbookAfterDelete ?? false) {
             /** @var Builder $query */
             $query = Log::where('model', '=', get_class($this));
             $query->where('model_key', '=', $this->getKey());

@@ -50,41 +50,41 @@ protected $deleteLogbookAfterDelete = false;
 ```
 
 If you want to change the displayed column name, you can add the following code to your model.
-This can be usefull if you want to give a translation string fo the column
+This can be usefull if you want to give a translation string for the column
 
 ```php
-    /**
-     * If you override this function you can change the column name that is displayed in the log book
-     * The returned column will be translated if it is possible
-     *
-     * @param string $column
-     * @return string
-     */
-    public static function changeLogBookDisplayColumn($column)
-    {
-        return 'example.plugin::lang.' . $column;
-    }
+/**
+ * If you override this function you can change the column name that is displayed in the log book
+ * The returned column will be translated if it is possible
+ *
+ * @param string $column
+ * @return string
+ */
+public static function changeLogBookDisplayColumn($column)
+{
+    return 'example.plugin::lang.' . $column;
+}
 ```
 
 You can also override the displayed value. You have to add the following function to your model.
 
 ```php
 /**
-     * If you override this function you can change the value that is displayed in the log book
-     * This can be useful for example with a dropdown
-     *
-     * @param $column
-     * @param $value
-     * @return string
-     */
-    public static function changeLogBookDisplayValue($column, $value)
-    {
-        if ($column) {
-            // do something
-        }
-
-        return $value;
+ * If you override this function you can change the value that is displayed in the log book
+ * This can be useful for example with a dropdown
+ *
+ * @param $column
+ * @param $value
+ * @return string
+ */
+public static function changeLogBookDisplayValue($column, $value)
+{
+    if ($column) {
+        // do something
     }
+
+    return $value;
+}
 ```
 
 # Form Widget
@@ -113,7 +113,3 @@ _logbook@update:
         - anotherRelationName
     tab: logbook
 ```
-
-
-###### icon
-Icon made by [popcorn-arts](https://www.flaticon.com/authors/popcorns-arts) from www.flaticon.com
