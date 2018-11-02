@@ -31,7 +31,7 @@ trait LogChanges
      * If true -> log items are deleted when the model is deleted
      * If false -> a new log item will be created with status deleted.
      *
-     * @var bool
+     * @var bool $deleteLogbookAfterDelete
      *
      * protected $deleteLogbookAfterDelete = false;
      */
@@ -40,7 +40,17 @@ trait LogChanges
      * Here you can override the model name that is displayed in the log files.
      * The name is going to be translated when possible.
      *
+     * string $logBookModelName
+     *
      * public $logBookModelName = 'MyModelName'
+     */
+
+    /**
+     * Hides or shows undo button for current field
+     *
+     * @var bool $logBookLogUndoable
+     *
+     * public $logBookLogUndoable = false
      */
 
     /**

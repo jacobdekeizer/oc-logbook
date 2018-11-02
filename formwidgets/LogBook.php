@@ -1,6 +1,9 @@
 <?php namespace Jacob\LogBook\FormWidgets;
 
 use Backend\Classes\FormWidgetBase;
+use Illuminate\Routing\Redirector;
+use Jacob\LogBook\Classes\Entities\Changes;
+use Jacob\Logbook\Models\Log;
 
 /**
  * LogBook Form Widget
@@ -23,6 +26,12 @@ class LogBook extends FormWidgetBase
     /** @var array|string|null  */
     public $showLogRelations = null;
 
+    /** @var bool $showUndoChangeButton */
+    public $showUndoChangesButton = true;
+
+    /** @var bool $refreshFromAfterUndo */
+    public $refreshFormAfterUndo = true;
+
     /**
      * @inheritDoc
      */
@@ -32,6 +41,8 @@ class LogBook extends FormWidgetBase
             'limitPerPage',
             'startPage',
             'showLogRelations',
+            'showUndoChangesButton',
+            'refreshFormAfterUndo',
         ]);
     }
 
@@ -60,6 +71,7 @@ class LogBook extends FormWidgetBase
 
         $this->vars['name'] = $this->formField->getName();
         $this->vars['model'] = $this->model;
+        $this->vars['showUndoChangesButton'] = $this->showUndoChangesButton;
     }
 
     /**
@@ -81,7 +93,7 @@ class LogBook extends FormWidgetBase
      */
     public function onLogBookChangePage()
     {
-        $page = (int)post('page');
+        $page = (int)post('page', 1);
         $this->prepareVars();
         $this->vars['logs'] = $this->model->getLogsFromLogBook(
             $this->limitPerPage,
@@ -92,6 +104,45 @@ class LogBook extends FormWidgetBase
         return [
             '#jacob-logbook' => $this->makePartial('logbook'),
         ];
+    }
+
+    /**
+     * Undo change from logbook
+     *
+     * @return mixed
+     * @throws \Exception
+     */
+    public function onLogBookUndoChange()
+    {
+        $id = post('id', null);
+
+        /** @var Log $log */
+        $log = Log::find($id);
+
+        if (!$log || ($log->getAttribute('changes')['type'] ?? null) !== Changes::TYPE_UPDATED) {
+            return $this->onLogBookChangePage();
+        }
+
+        /** @var \Model $modelInstance */
+        $modelInstance = app($log->getAttribute('model'));
+
+        /** @var \Model $changedModel */
+        $changedModel =  $modelInstance->find($log->getAttribute('model_key'));
+
+        /** @var array $changedAttribute */
+        foreach ($log->getAttribute('changes')['changedAttributes'] ?? [] as $changedAttribute) {
+            $changedModel->setAttribute($changedAttribute['column'], $changedAttribute['old']);
+        }
+
+        $changedModel->save();
+
+        if ($this->refreshFormAfterUndo) {
+            /** @var Redirector $redirect */
+            $redirect = resolve(Redirector::class);
+            return $redirect->refresh();
+        }
+
+        return $this->onLogBookChangePage();
     }
 
     /**

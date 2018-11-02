@@ -3,6 +3,7 @@
 return [
     'log' => 'Log',
     'date' => 'Date',
+    'undo' => 'Undo',
     'changes' => [
         'user' => ':user has :type :model',
         'unknown' => ':model is :type',

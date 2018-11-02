@@ -5,6 +5,9 @@
             <tr>
                 <th><span><?= e(trans('jacob.logbook::lang.log')) ?></span></th>
                 <th><span><?= e(trans('jacob.logbook::lang.date')) ?></span></th>
+                <?php if ($showUndoChangesButton): ?>
+                    <th><span></span></th>
+                <?php endif; ?>
             </tr>
             </thead>
             <tbody>
@@ -21,7 +24,7 @@
                                 'model' => $modelName
                             ])) ?>
                         <?php else: ?>
-                        <?= e(trans('jacob.logbook::lang.changes.unknown', [
+                            <?= e(trans('jacob.logbook::lang.changes.unknown', [
                                 'type' => trans('jacob.logbook::lang.changes.type.' . $changes['type']),
                                 'model' => $modelName
                             ])) ?>
@@ -42,6 +45,22 @@
                     <td>
                         <?= $log->updated_at->format('l j F Y H:i:s') ?>
                     </td>
+                    <?php if ($showUndoChangesButton): ?>
+                        <td>
+                            <?php if ($currentModel->logBookLogUndoable ?? true && $changes['type'] === Jacob\LogBook\Classes\Entities\Changes::TYPE_UPDATED): ?>
+                                <button class="btn btn-primary"
+                                        data-request="onLogBookUndoChange"
+                                        data-request-data="id: <?= $log->getkey() ?>"
+                                        data-request-flash>
+                                    <?= e(trans('jacob.logbook::lang.undo')) ?>
+                                </button>
+                            <?php else: ?>
+                                <button disabled class="btn btn-primary">
+                                    <?= e(trans('jacob.logbook::lang.undo')) ?>
+                                </button>
+                            <?php endif; ?>
+                        </td>
+                    <?php endif; ?>
                 </tr>
             <?php endforeach; ?>
             </tbody>

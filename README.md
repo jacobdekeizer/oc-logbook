@@ -87,6 +87,18 @@ public static function changeLogBookDisplayValue($column, $value)
 }
 ```
 
+If you want to hide the undo button for this model specifically, you can add $logBookUndoable to your model.
+You can also disable the undo button in the log book form widget.
+
+```php
+/**
+ * Hides or shows undo button for current field
+ *
+ * @var bool $logBookLogUndoable
+ */
+public $logBookLogUndoable = false
+```
+
 # Form Widget
 
 You can use the formwidget as follows: <br/>
@@ -100,10 +112,11 @@ Options: <br/>
 | limitPerPage      | 20            | int       |
 | startPage         | 1             | int       |
 | showLogRelations  | null          | array or string |
+| showUndoChangesButton| true       | bool      |
+| refreshFormAfterUndo | true       | bool      |
 
 Example:
 ```yaml
-#tab logbook
 _logbook@update:
     type: jacob_logbook_log
     limitPerPage: 10 #optional
@@ -111,5 +124,6 @@ _logbook@update:
     showLogRelations: #optional (contains the name(s) of the relations)
         - customer
         - anotherRelationName
-    tab: logbook
+    showUndoChangesButton: true
+    refreshFormAfterUndo: false
 ```
