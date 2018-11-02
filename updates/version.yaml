@@ -3,3 +3,5 @@
     - create_logs_table.php
 1.0.2:
     - Fix error when changing properties from the LogChanges trait.
+1.0.3:
+    - Add undo button to form widget and add report widget.

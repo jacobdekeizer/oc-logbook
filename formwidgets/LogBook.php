@@ -151,6 +151,6 @@ class LogBook extends FormWidgetBase
      */
     public function getSaveValue($value)
     {
-        return null;
+        return \Backend\Classes\FormField::NO_SAVE_DATA;
     }
 }
