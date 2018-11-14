@@ -63,10 +63,7 @@ class LogBook extends FormWidgetBase
     public function prepareVars()
     {
         if ($this->showLogRelations !== null) {
-            if (!is_array($this->showLogRelations)) {
-                $relation = $this->showLogRelations;
-                $this->showLogRelations = [$relation];
-            }
+            $this->showLogRelations = (array) $this->showLogRelations;
         }
 
         $this->vars['name'] = $this->formField->getName();
