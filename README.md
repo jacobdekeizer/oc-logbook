@@ -14,7 +14,7 @@ Use the LogChanges trait in your model.
 This trait will automatically save changes from the model in the database.
 
 ```php
-use Jacob\Logbook\Traits\LogChanges;
+use \Jacob\Logbook\Traits\LogChanges;
 ```
 
 If you want to ignore fields that don't need the be logged, add this to your model.
