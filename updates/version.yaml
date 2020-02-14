@@ -5,3 +5,6 @@
     - Fix error when changing properties from the LogChanges trait.
 1.0.3:
     - Add undo button to form widget and add report widget.
+1.0.4:
+    - Update indexes for faster query results
+    - update_indexes_logs_table.php
