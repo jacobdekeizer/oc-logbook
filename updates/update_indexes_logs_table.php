@@ -1,4 +1,6 @@
-<?php namespace Jacob\Logbook\Updates;
+<?php
+
+namespace Jacob\Logbook\Updates;
 
 use October\Rain\Database\Schema\Blueprint;
 use October\Rain\Database\Updates\Migration;
@@ -6,7 +8,7 @@ use October\Rain\Support\Facades\Schema;
 
 class UpdateIndexesLogsTable extends Migration
 {
-    public function up()
+    public function up(): void
     {
         Schema::table('jacob_logbook_logs', function(Blueprint $table) {
             $table->dropIndex('jacob_logbook_logs_model_index');
@@ -19,7 +21,7 @@ class UpdateIndexesLogsTable extends Migration
         });
     }
 
-    public function down()
+    public function down(): void
     {
         Schema::table('jacob_logbook_logs', function(Blueprint $table) {
             $table->dropIndex('jacob_logbook_logs_model_model_key_updated_at_index');

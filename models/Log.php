@@ -1,26 +1,30 @@
-<?php namespace Jacob\Logbook\Models;
+<?php
+
+namespace Jacob\Logbook\Models;
 
 use Backend\Models\User;
-use Model;
+use Carbon\Carbon;
+use Jacob\LogBook\Classes\Entities\Attribute;
+use Jacob\LogBook\Classes\Entities\Changes;
+use October\Rain\Database\Builder;
+use October\Rain\Database\Model;
 
 /**
- * Log Model
+ * @property User $backendUser
+ * @method Builder user()
  */
 class Log extends Model
 {
-    /**
-     * @var string The database table used by the model.
-     */
     public $table = 'jacob_logbook_logs';
 
-    /**
-     * @var array Guarded fields
-     */
+    public $belongsTo = [
+        'backendUser' => [
+            User::class
+        ],
+    ];
+
     protected $guarded = ['*'];
 
-    /**
-     * @var array Fillable fields
-     */
     protected $fillable = [
         'model',
         'model_key',
@@ -28,19 +32,49 @@ class Log extends Model
         'backend_user_id',
     ];
 
-    /**
-     * @var array Attribute names to encode and decode using JSON.
-     */
     protected $jsonable = [
         'changes',
     ];
 
-    /**
-     * @var array $belongsTo relations
-     */
-    public $belongsTo = [
-        'backendUser' => [
-            User::class
-        ],
-    ];
+    public function getId(): int
+    {
+        return $this->getAttribute('id');
+    }
+
+    public function getModel(): string
+    {
+        return $this->getAttribute('model');
+    }
+
+    public function getModelKey(): string
+    {
+        return $this->getAttribute('model_key');
+    }
+
+    public function getMutation(): Changes
+    {
+        $changes = $this->getAttribute('changes');
+
+        $attributes = $changes['changedAttributes'] !== null
+            ? array_map(static function (array $attribute) {
+                return new Attribute(
+                    $attribute['column'] ?? '',
+                    $attribute['old'] ?? null,
+                    $attribute['new'] ?? null
+                );
+            }, $changes['changedAttributes'])
+            : null;
+
+        return new Changes($changes['type'], $attributes);
+    }
+
+    public function getCreatedAt(): ?Carbon
+    {
+        return $this->getAttribute('created_at');
+    }
+
+    public function getUpdatedAt(): ?Carbon
+    {
+        return $this->getAttribute('updated_at');
+    }
 }

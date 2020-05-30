@@ -14,7 +14,7 @@ Use the LogChanges trait in your model.
 This trait will automatically save changes from the model in the database.
 
 ```php
-use \Jacob\Logbook\Traits\LogChanges;
+use Jacob\Logbook\Traits\LogChanges;
 ```
 
 If you want to ignore fields that don't need the be logged, add this to your model.
@@ -112,6 +112,7 @@ Options: <br/>
 | limitPerPage      | 20            | int       |
 | startPage         | 1             | int       |
 | showLogRelations  | null          | array or string |
+| showSoftDeletedRelations  | null  | array or string |
 | showUndoChangesButton| true       | bool      |
 | refreshFormAfterUndo | true       | bool      |
 
@@ -124,6 +125,8 @@ _logbook@update:
     showLogRelations: #optional (contains the name(s) of the relations)
         - customer
         - anotherRelationName
-    showUndoChangesButton: true
-    refreshFormAfterUndo: false
+    showSoftDeleteRelations: #optional (contains the name(s) of the relations with soft delete support)
+        - relationNameWithSoftDeletes
+    showUndoChangesButton: true #optional
+    refreshFormAfterUndo: false #optional
 ```

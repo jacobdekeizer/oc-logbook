@@ -1,12 +1,14 @@
-<?php namespace Jacob\Logbook\Updates;
+<?php
 
-use Schema;
+namespace Jacob\Logbook\Updates;
+
 use October\Rain\Database\Schema\Blueprint;
 use October\Rain\Database\Updates\Migration;
+use October\Rain\Support\Facades\Schema;
 
 class CreateLogsTable extends Migration
 {
-    public function up()
+    public function up(): void
     {
         Schema::create('jacob_logbook_logs', function(Blueprint $table) {
             $table->engine = 'InnoDB';
@@ -28,7 +30,7 @@ class CreateLogsTable extends Migration
         });
     }
 
-    public function down()
+    public function down(): void
     {
         Schema::dropIfExists('jacob_logbook_logs');
     }

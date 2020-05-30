@@ -2,12 +2,15 @@
 
 namespace Jacob\Logbook\Traits;
 
-use Backend\Facades\BackendAuth;
+use Backend\Classes\AuthManager;
 use Backend\Models\User;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Jacob\LogBook\Classes\LoadRelation;
 use Jacob\Logbook\Models\Log;
 use Jacob\LogBook\Classes\Entities\Attribute;
 use Jacob\LogBook\Classes\Entities\Changes;
 use October\Rain\Database\Builder;
+use October\Rain\Database\Model;
 
 trait LogChanges
 {
@@ -78,15 +81,10 @@ trait LogChanges
         return $column;
     }
 
-
-    /**
-     * Boot log changes trait
-     *
-     * @return void
-     */
-    public static function bootLogChanges()
+    public static function bootLogChanges(): void
     {
-        static::extend(function($model) {
+        static::extend(function(Model $model) {
+            /** @var Model|self $model */
             $model->bindEvent('model.afterCreate', function() use ($model) {
                 $model->logChangesAfterCreate();
             });
@@ -101,13 +99,10 @@ trait LogChanges
         });
     }
 
-    /**
-     * @param Changes $changes
-     */
-    private function createLogBookLogItem(Changes $changes)
+    private function createLogBookLogItem(Changes $changes): void
     {
         /** @var User $user */
-        $user = BackendAuth::getUser();
+        $user = AuthManager::instance()->getUser();
 
         if (!$user) {
             $backendUserId = null;
@@ -123,77 +118,46 @@ trait LogChanges
         ]);
     }
 
-    /**
-     * Log the creation of current model
-     *
-     * @return void
-     */
-    public function logChangesAfterCreate()
+    public function logChangesAfterCreate(): void
     {
-        $changes = new Changes([
-            'type' => Changes::TYPE_CREATED,
-        ]);
+        $changes = new Changes(Changes::TYPE_CREATED);
 
         $this->createLogBookLogItem($changes);
     }
 
-    /**
-     * Log the changes after update
-     *
-     * @return void
-     */
-    public function logChangesAfterUpdate()
+    public function logChangesAfterUpdate(): void
     {
         $attributes = [];
 
-        /** @var array $dirtyAttributes */
-        $dirtyAttributes = $this->getDirty();
-
-        /** @var array $originalAttributes */
         $originalAttributes = $this->getOriginal();
 
-        /** @var array $ignoreFieldsLogbook */
         $ignoreFieldsLogbook = $this->ignoreFieldsLogbook ?? ['updated_at'];
 
-        foreach ($dirtyAttributes as $column => $newValue) {
+        foreach ($this->getDirty() as $column => $newValue) {
             if (in_array($column, $ignoreFieldsLogbook)) {
                 continue; //ignore field
             }
 
-            /** @var Attribute $attributeChanged */
-            $attributeChanged = new Attribute([
-                'column' => $column,
-                'old' => $originalAttributes[$column] ?? null,
-                'new' => $newValue,
-            ]);
-
-            $attributes[] = $attributeChanged->getData();
+            $attributes[] = new Attribute($column,$originalAttributes[$column] ?? null, $newValue);
         }
 
-        $changes = new Changes([
-            'type' => Changes::TYPE_UPDATED,
-            'changedAttributes' => $attributes
-        ]);
+        if (count($attributes) === 0) {
+            // no changes to log
+            return;
+        }
 
-        $this->createLogBookLogItem($changes);
+        $this->createLogBookLogItem(new Changes(Changes::TYPE_UPDATED, $attributes));
     }
 
-    /**
-     * Log delete or delete logs when model is deleted
-     *
-     * @return void
-     */
-    public function logChangesAfterDelete()
+    public function logChangesAfterDelete(): void
     {
         if ($this->deleteLogbookAfterDelete ?? false) {
             /** @var Builder $query */
-            $query = Log::where('model', '=', get_class($this));
+            $query = Log::query()->where('model', '=', get_class($this));
             $query->where('model_key', '=', $this->getKey());
             $query->delete();
         } else {
-            $changes = new Changes([
-                'type' => Changes::TYPE_DELETED,
-            ]);
+            $changes = new Changes(Changes::TYPE_DELETED);
 
             $this->createLogBookLogItem($changes);
         }
@@ -202,13 +166,13 @@ trait LogChanges
     /**
      * @param int $limitPerPage
      * @param int $currentPage
-     * @param array $relations
-     * @return \Illuminate\Contracts\Pagination\LengthAwarePaginator
+     * @param LoadRelation[]|null $relations
+     * @return LengthAwarePaginator
      */
-    public function getLogsFromLogBook($limitPerPage = 20, $currentPage = 0, $relations = null)
+    public function getLogsFromLogBook(int $limitPerPage = 20, int $currentPage = 0, array $relations = null): LengthAwarePaginator
     {
         /** @var Builder $query */
-        $query = Log::where([
+        $query = Log::query()->where([
             ['model', '=', get_class($this)],
             ['model_key', '=', $this->getKey()]
         ]);
@@ -216,15 +180,22 @@ trait LogChanges
         if ($relations !== null) {
             foreach ($relations as $relation) {
                 $relationClass = null;
-                $relatedModels = $this->$relation;
+
+                $relationName = $relation->getName();
+
+                if ($relation->isWithTrashed()) {
+                    $relatedModels = $this->$relationName()->withTrashed()->get();
+                } else {
+                    $relatedModels = $this->$relationName;
+                }
 
                 // no related items found
                 if ($relatedModels === null ) {
                     continue;
                 }
 
-                //one item found
-                if ($relatedModels instanceof \Model) {
+                // one related item found
+                if ($relatedModels instanceof Model) {
                     $query->orWhere([
                         ['model', '=', get_class($relatedModels)],
                         ['model_key', '=', $relatedModels->getKey()]
@@ -232,8 +203,8 @@ trait LogChanges
                     continue;
                 }
 
-                //multiple items
-                /** @var \October\Rain\Database\Model $relatedModel */
+                // multiple related items found
+                /** @var Model $relatedModel */
                 foreach ($relatedModels as $relatedModel) {
                     if ($relationClass === null) {
                         $relationClass = get_class($relatedModel);
@@ -249,6 +220,7 @@ trait LogChanges
 
         $query->orderBy('updated_at', 'desc');
         $query->with('backendUser');
+
         return $query->paginate($limitPerPage, $currentPage);
     }
 }

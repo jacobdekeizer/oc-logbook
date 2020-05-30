@@ -5,38 +5,39 @@
             <tr>
                 <th><span><?= e(trans('jacob.logbook::lang.log')) ?></span></th>
                 <th><span><?= e(trans('jacob.logbook::lang.date')) ?></span></th>
-                <?php if ($showUndoChangesButton): ?>
+                <?php if ($this->showUndoChangesButton): ?>
                     <th><span></span></th>
                 <?php endif; ?>
             </tr>
             </thead>
             <tbody>
-            <?php foreach($logs as $log): ?>
+            <?php foreach($this->logs as $log): ?>
                 <tr>
-                    <?php $changes = $log->changes; ?>
-                    <?php $currentModel = new $log->model ?>
+                    <?php $changes = $log->getMutation(); ?>
+                    <?php $currentModelClass = $log->getModel() ?>
+                    <?php $currentModel = new $currentModelClass; ?>
                     <?php $modelName = trans($currentModel->logBookModelName ?? substr(strrchr(get_class($currentModel), "\\"), 1)); ?>
                     <td>
                         <?php if ($log->backendUser): ?>
                             <?= e(trans('jacob.logbook::lang.changes.user', [
                                 'user' => ucfirst($log->backendUser->login),
-                                'type' => trans('jacob.logbook::lang.changes.type.' . $changes['type']),
+                                'type' => trans('jacob.logbook::lang.changes.type.' . $changes->getType()),
                                 'model' => $modelName
                             ])) ?>
                         <?php else: ?>
                             <?= e(trans('jacob.logbook::lang.changes.unknown', [
-                                'type' => trans('jacob.logbook::lang.changes.type.' . $changes['type']),
+                                'type' => trans('jacob.logbook::lang.changes.type.' . $changes->getType()),
                                 'model' => $modelName
                             ])) ?>
                         <?php endif; ?>
 
-                        <?php if ($changes['type'] === Jacob\LogBook\Classes\Entities\Changes::TYPE_UPDATED): ?>
+                        <?php if ($changes->isTypeUpdated()): ?>
                             : <br/>
-                            <?php foreach ($changes['changedAttributes'] as $attribute): ?>
+                            <?php foreach ($changes->getChangedAttributes() as $attribute): ?>
                                 <?= e(trans('jacob.logbook::lang.changes.column', [
-                                    'column' => trans($currentModel->changeLogBookDisplayColumn($attribute['column'])),
-                                    'from' => $currentModel->changeLogBookDisplayValue($attribute['column'], $attribute['old']) ?? '-',
-                                    'to' => $currentModel->changeLogBookDisplayValue($attribute['column'], $attribute['new']) ?? '-'
+                                    'column' => trans($currentModel->changeLogBookDisplayColumn($attribute->getColumn())),
+                                    'from' => $currentModel->changeLogBookDisplayValue($attribute->getColumn(), $attribute->getOld()) ?? '-',
+                                    'to' => $currentModel->changeLogBookDisplayValue($attribute->getColumn(), $attribute->getNew()) ?? '-'
                                 ])) ?>
                                <br/>
                             <?php endforeach ?>
@@ -45,12 +46,12 @@
                     <td>
                         <?= $log->updated_at->format('l j F Y H:i:s') ?>
                     </td>
-                    <?php if ($showUndoChangesButton): ?>
+                    <?php if ($this->showUndoChangesButton): ?>
                         <td>
-                            <?php if ($currentModel->logBookLogUndoable ?? true && $changes['type'] === Jacob\LogBook\Classes\Entities\Changes::TYPE_UPDATED): ?>
+                            <?php if ($currentModel->logBookLogUndoable ?? true && $changes->isTypeUpdated()): ?>
                                 <button class="btn btn-primary"
                                         data-request="onLogBookUndoChange"
-                                        data-request-data="id: <?= $log->getkey() ?>"
+                                        data-request-data="id: <?= $log->getId() ?>"
                                         data-request-flash>
                                     <?= e(trans('jacob.logbook::lang.undo')) ?>
                                 </button>
@@ -65,20 +66,20 @@
             <?php endforeach; ?>
             </tbody>
         </table>
-        <?php if ($logs): ?>
+        <?php if ($this->logs): ?>
             <div class="list-footer">
                 <div class="list-pagination">
                     <div class="control-pagination">
                         <span class="page-iteration">
                             <?= e(trans('backend::lang.list.pagination', [
-                                'from' => $logs->firstItem(),
-                                'to' => $logs->lastItem(), 'total' => $logs->total()
+                                'from' => $this->logs->firstItem(),
+                                'to' => $this->logs->lastItem(), 'total' => $this->logs->total()
                             ])) ?>
                         </span>
 
-                        <?php if ($logs->currentPage() !== 1): ?>
+                        <?php if ($this->logs->currentPage() !== 1): ?>
                             <a data-request="onLogBookChangePage"
-                               data-request-data="page: <?= $logs->currentPage() - 1 ?>"
+                               data-request-data="page: <?= $this->logs->currentPage() - 1 ?>"
                                href="javascript:void(0);"
                                class="page-back"
                                title="<?= e(trans('backend::lang.list.prev_page')) ?>"></a>
@@ -88,9 +89,9 @@
                                 title="<?= e(trans('backend::lang.list.prev_page')) ?>"></span>
                         <?php endif; ?>
 
-                        <?php if ($logs->currentPage() !== $logs->lastPage()): ?>
+                        <?php if ($this->logs->currentPage() !== $this->logs->lastPage()): ?>
                             <a data-request="onLogBookChangePage"
-                               data-request-data="page: <?= $logs->currentPage() + 1 ?>"
+                               data-request-data="page: <?= $this->logs->currentPage() + 1 ?>"
                                href="javascript:void(0);"
                                class="page-next"
                                title="<?= e(trans('backend::lang.list.next_page')) ?>"></a>

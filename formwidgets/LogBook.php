@@ -1,23 +1,24 @@
-<?php namespace Jacob\LogBook\FormWidgets;
+<?php
 
+namespace Jacob\LogBook\FormWidgets;
+
+use Backend\Classes\FormField;
 use Backend\Classes\FormWidgetBase;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Routing\Redirector;
-use Jacob\LogBook\Classes\Entities\Changes;
+use Jacob\LogBook\Classes\LoadRelation;
 use Jacob\Logbook\Models\Log;
+use Jacob\Logbook\Traits\LogChanges;
+use October\Rain\Database\Model;
+use Throwable;
 
 /**
- * LogBook Form Widget
+ * @property LogChanges|Model $model
  */
 class LogBook extends FormWidgetBase
 {
-    /**
-     * @inheritDoc
-     */
-    protected $defaultAlias = 'jacob_logbook_log';
-
-    /**
-     * @var int $limitPerPage The amount of log items per page
-     */
+    /** @var int $limitPerPage The amount of log items per page */
     public $limitPerPage = 20;
 
     /** @var int $startPage The page number to start to show log items */
@@ -26,76 +27,67 @@ class LogBook extends FormWidgetBase
     /** @var array|string|null  */
     public $showLogRelations = null;
 
+    /** @var array|string|null */
+    public $showSoftDeleteRelations = null;
+
     /** @var bool $showUndoChangeButton */
     public $showUndoChangesButton = true;
 
     /** @var bool $refreshFromAfterUndo */
     public $refreshFormAfterUndo = true;
 
-    /**
-     * @inheritDoc
-     */
-    public function init()
+    /** @var LengthAwarePaginator */
+    public $logs;
+
+    protected $defaultAlias = 'jacob_logbook_log';
+
+    public function init(): void
     {
         $this->fillFromConfig([
             'limitPerPage',
             'startPage',
             'showLogRelations',
+            'showSoftDeleteRelations',
+            'relationsWithTrashed',
             'showUndoChangesButton',
             'refreshFormAfterUndo',
         ]);
     }
 
-    /**
-     * @inheritDoc
-     */
-    public function render()
+    public function render(): string
     {
         $this->prepareVars();
-        $this->prepareLogs();
+
+        $this->logs = $this->model->getLogsFromLogBook(
+            $this->limitPerPage,
+            $this->startPage,
+            $this->getRelationsToLoad()
+        );
 
         return $this->makePartial('default');
     }
 
-    /**
-     * Prepares the form widget view data
-     */
-    public function prepareVars()
+    public function prepareVars(): void
     {
         if ($this->showLogRelations !== null) {
             $this->showLogRelations = (array) $this->showLogRelations;
         }
 
-        $this->vars['name'] = $this->formField->getName();
-        $this->vars['model'] = $this->model;
-        $this->vars['showUndoChangesButton'] = $this->showUndoChangesButton;
+        if ($this->showSoftDeleteRelations !== null) {
+            $this->showSoftDeleteRelations = (array) $this->showSoftDeleteRelations;
+        }
     }
 
-    /**
-     * Prepare the log items
-     */
-    public function prepareLogs()
+    public function onLogBookChangePage(): array
     {
-        $this->vars['logs'] = $this->model->getLogsFromLogBook(
-            $this->limitPerPage,
-            $this->startPage,
-            $this->showLogRelations
-        );
-    }
+        $page = (int) post('page', 1);
 
-    /**
-     * Change log book page
-     *
-     * @return array
-     */
-    public function onLogBookChangePage()
-    {
-        $page = (int)post('page', 1);
         $this->prepareVars();
-        $this->vars['logs'] = $this->model->getLogsFromLogBook(
+
+        $this->logs = $this->model->getLogsFromLogBook(
             $this->limitPerPage,
             $page,
-            $this->showLogRelations
+            $this->getRelationsToLoad()
         );
 
         return [
@@ -104,9 +96,7 @@ class LogBook extends FormWidgetBase
     }
 
     /**
-     * Undo change from logbook
-     *
-     * @return mixed
+     * @return RedirectResponse|array
      * @throws \Exception
      */
     public function onLogBookUndoChange()
@@ -114,21 +104,27 @@ class LogBook extends FormWidgetBase
         $id = post('id', null);
 
         /** @var Log $log */
-        $log = Log::find($id);
+        $log = Log::query()->find($id);
 
-        if (!$log || ($log->getAttribute('changes')['type'] ?? null) !== Changes::TYPE_UPDATED) {
+        if (!$log || !$log->getMutation()->isTypeUpdated()) {
             return $this->onLogBookChangePage();
         }
 
-        /** @var \Model $modelInstance */
-        $modelInstance = app($log->getAttribute('model'));
+        /** @var Model $modelInstance */
+        $modelInstance = resolve($log->getAttribute('model'));
 
-        /** @var \Model $changedModel */
-        $changedModel =  $modelInstance->find($log->getAttribute('model_key'));
+        $modelQuery = $modelInstance->newQuery();
 
-        /** @var array $changedAttribute */
-        foreach ($log->getAttribute('changes')['changedAttributes'] ?? [] as $changedAttribute) {
-            $changedModel->setAttribute($changedAttribute['column'], $changedAttribute['old']);
+        try {
+            $modelQuery->withTrashed();
+        } catch (Throwable $throwable) {
+            // this model doesn't support soft deleting
+        }
+
+        $changedModel = $modelQuery->find($log->getModelKey());
+
+        foreach ($log->getMutation()->getChangedAttributes() as $changedAttribute) {
+            $changedModel->setAttribute($changedAttribute->getColumn(), $changedAttribute->getOld());
         }
 
         $changedModel->save();
@@ -142,12 +138,26 @@ class LogBook extends FormWidgetBase
         return $this->onLogBookChangePage();
     }
 
-    /**
-     * @param mixed $value
-     * @return null|string
-     */
-    public function getSaveValue($value)
+    public function getSaveValue($value): int
     {
-        return \Backend\Classes\FormField::NO_SAVE_DATA;
+        return FormField::NO_SAVE_DATA;
+    }
+
+    /**
+     * @return LoadRelation[]
+     */
+    private function getRelationsToLoad(): array
+    {
+        $data = [];
+
+        foreach ($this->showLogRelations ?? [] as $relation) {
+            $data[] = new LoadRelation($relation, false);
+        }
+
+        foreach ($this->showSoftDeleteRelations ?? [] as $relation) {
+            $data[] = new LoadRelation($relation, true);
+        }
+
+        return $data;
     }
 }

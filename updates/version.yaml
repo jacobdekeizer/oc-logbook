@@ -8,3 +8,5 @@
 1.0.4:
     - Update indexes for faster query results
     - update_indexes_logs_table.php
+2.0.0:
+    - Add support for soft deleted models, cleanup code and drop support for php 7.0
