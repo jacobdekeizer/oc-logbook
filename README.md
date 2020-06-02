@@ -102,7 +102,7 @@ public $logBookLogUndoable = false
 # Form Widget
 
 You can use the formwidget as follows: <br/>
-**MAKE** **SURE** TO SET AN UNDERSCORE IN FRONT OF THE FORM FIELD NAME. FOR EXAMPLE _logbook,
+**MAKE** **SURE** to set an underscore in front of the form field name. for example _logbook,
 because the Form Widget doesn't has a save value.
 
 Options: <br/>
