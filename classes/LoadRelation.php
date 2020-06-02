@@ -4,8 +4,8 @@ namespace Jacob\LogBook\Classes;
 
 class LoadRelation
 {
-    private string $name;
-    private bool $withTrashed;
+    private $name;
+    private $withTrashed;
 
     public function __construct(string $name, bool $withTrashed)
     {

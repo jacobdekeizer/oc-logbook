@@ -10,3 +10,5 @@
     - update_indexes_logs_table.php
 2.0.0:
     - Add support for soft deleted models, cleanup code and drop support for php 7.0
+2.0.1:
+    - Remove php 7.4 property types
