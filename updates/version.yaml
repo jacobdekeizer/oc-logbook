@@ -12,3 +12,5 @@
     - Add support for soft deleted models, cleanup code and drop support for php 7.0
 2.0.1:
     - Remove php 7.4 property types
+2.0.2:
+    - Fix report widget

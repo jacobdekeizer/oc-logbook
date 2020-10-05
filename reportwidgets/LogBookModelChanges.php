@@ -3,10 +3,17 @@
 namespace Jacob\Logbook\ReportWidgets;
 
 use Backend\Classes\ReportWidgetBase;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Jacob\Logbook\Models\Log;
 
 class LogBookModelChanges extends ReportWidgetBase
 {
+    /** @var LengthAwarePaginator */
+    public $logs;
+
+    /** @var bool */
+    public $showUndoChangesButton;
+
     public function defineProperties(): array
     {
         return [
@@ -37,11 +44,12 @@ class LogBookModelChanges extends ReportWidgetBase
 
     private function getLogBookPartial($page = 1): string
     {
-        return $this->makePartial('$/jacob/logbook/formwidgets/logbook/partials/_logbook.htm', [
-            'showUndoChangesButton' => false,
-            'logs' => Log::query()
-                ->orderBy('updated_at', 'desc')
-                ->paginate($this->property('limitPerPage', 20), $page),
-        ]);
+        $this->logs = Log::query()
+            ->orderBy('updated_at', 'desc')
+            ->paginate($this->property('limitPerPage', 20), $page);
+
+        $this->showUndoChangesButton = false;
+
+        return $this->makePartial('$/jacob/logbook/formwidgets/logbook/partials/_logbook.htm');
     }
 }
