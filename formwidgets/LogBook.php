@@ -124,7 +124,13 @@ class LogBook extends FormWidgetBase
         $changedModel = $modelQuery->find($log->getModelKey());
 
         foreach ($log->getMutation()->getChangedAttributes() as $changedAttribute) {
-            $changedModel->setAttribute($changedAttribute->getColumn(), $changedAttribute->getOld());
+            if (in_array($changedAttribute->getColumn(), $changedModel->getJsonable())) {
+                $oldValue = $changedAttribute->getOld() ? json_decode($changedAttribute->getOld()) : null;
+            } else {
+                $oldValue = $changedAttribute->getOld();
+            }
+
+            $changedModel->setAttribute($changedAttribute->getColumn(), $oldValue);
         }
 
         $changedModel->save();
