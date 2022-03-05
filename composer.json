@@ -1,0 +1,8 @@
+{
+  "name": "jacob/logbook-plugin",
+  "type": "october-plugin",
+  "description": "This plugin creates an audit log for changes in an Eloquent model.",
+  "require": {
+    "composer/installers": "~1.0"
+  }
+}
