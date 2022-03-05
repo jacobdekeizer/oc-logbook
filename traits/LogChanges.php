@@ -5,6 +5,7 @@ namespace Jacob\Logbook\Traits;
 use Backend\Classes\AuthManager;
 use Backend\Models\User;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Contracts\Support\Htmlable;
 use Jacob\LogBook\Classes\LoadRelation;
 use Jacob\Logbook\Models\Log;
 use Jacob\LogBook\Classes\Entities\Attribute;
@@ -62,7 +63,7 @@ trait LogChanges
      *
      * @param $column
      * @param $value
-     * @return string
+     * @return string|Htmlable
      */
     public static function changeLogBookDisplayValue($column, $value)
     {
