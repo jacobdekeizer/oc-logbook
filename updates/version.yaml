@@ -14,3 +14,6 @@
     - Remove php 7.4 property types
 2.0.2:
     - Fix report widget
+2.1.0:
+    - Add support for jsonable columns
+    - Add support for html content in changeLogBookDisplayValue
